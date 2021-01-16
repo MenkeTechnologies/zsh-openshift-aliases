@@ -1,5 +1,13 @@
 # https://www.datagenx.net/2019/12/my-openshift-aliases.html
 
+if ! type -ap -- "oc" >/dev/null 2>&1; then
+    return 1
+fi
+
+if ! type -- "__start_oc" >/dev/null 2>&1; then
+    source <(oc completion zsh) 
+fi
+
 OCP_USERNAME=''
 OCP_DEV_URL=''
 OCP_QA_URL=''

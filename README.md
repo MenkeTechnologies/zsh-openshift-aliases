@@ -11,18 +11,18 @@
 ```
 
 <p align="center">
-<code>// `oc` IS A WORD. `og`, `ologin`, `ocdev`, `ocqa` ARE THE GRID. 53 ALIASES. ONE PLUGIN.</code>
+<code>// `oc` IS A WORD. `og`, `ologin`, `ocdev`, `ocqa` ARE THE GRID. 52 ALIASES. ONE PLUGIN.</code>
 </p>
 
 ---
 
-[![Aliases](https://img.shields.io/badge/aliases-53-ff2a6d.svg)](zsh-openshift-aliases.plugin.zsh)
+[![Aliases](https://img.shields.io/badge/aliases-52-ff2a6d.svg)](zsh-openshift-aliases.plugin.zsh)
 [![Tag](https://img.shields.io/badge/tag-v0.1.0-39ff14.svg)](https://github.com/MenkeTechnologies/zsh-openshift-aliases/tags)
 [![Shell](https://img.shields.io/badge/shell-zsh-05d9e8.svg)](#install)
 [![Tool](https://img.shields.io/badge/needs-oc-d300c5.svg)](https://github.com/openshift/oc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](license.md)
 
-### `[SIGNAL // 53 OPENSHIFT ALIASES + `oc` COMPLETION + LOGIN MACROS]`
+### `[SIGNAL // 52 OPENSHIFT ALIASES + `oc` COMPLETION + LOGIN MACROS]`
 
 > *// jacking into your OpenShift cluster from zsh — no more `oc get pods --namespace`-by-hand //*
 
@@ -30,7 +30,7 @@
 
 ## `> SYSTEM OVERVIEW`
 
-`zsh-openshift-aliases` registers 53 short aliases over `oc` (the OpenShift CLI) plus pre-wired login macros for dev/QA endpoints and zsh tab-completion for the `oc` binary. Auto-noops on hosts where `oc` is missing — safe to load in zpwr-tier plugin chains without `command -v` guards in your `.zshrc`.
+`zsh-openshift-aliases` registers 52 short aliases over `oc` (the OpenShift CLI) plus pre-wired login macros for dev/QA endpoints and zsh tab-completion for the `oc` binary. Auto-noops on hosts where `oc` is missing — safe to load in zpwr-tier plugin chains without `command -v` guards in your `.zshrc`.
 
 Set `OCP_USERNAME`, `OCP_DEV_URL`, `OCP_QA_URL` in your env, then `ocdev` / `ocqa` log you in with one keystroke.
 
@@ -39,7 +39,7 @@ Set `OCP_USERNAME`, `OCP_DEV_URL`, `OCP_QA_URL` in your env, then `ocdev` / `ocq
 ## `> WHAT YOU GET`
 
 ```
-[x] 53 oc-* aliases (og=get, odep=apply -f, odesc=describe, olog=logs -f, ...)
+[x] 52 oc-* aliases (og=get, odep=apply -f, odesc=describe, olog=logs -f, ...)
 [x] ologin       — oc rsh into running pod
 [x] ocdev/ocqa   — env-driven login macros
 [x] oc completion auto-sourced when `oc` is on PATH

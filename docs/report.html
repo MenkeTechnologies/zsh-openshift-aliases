@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="zsh-openshift-aliases — Engineering report. 118-line single-file zsh plugin: 52 aliases over the OpenShift oc CLI, 5 helper functions, env-driven ocdev/ocqa login macros, ologin (oc rsh), and auto-sourced oc completion behind a type -ap oc load guard. 15 zunit @test blocks across 3 t-*.zsh files (230 lines) pin alias presence, the login-macro env-var contract, oc-missing graceful degradation, and re-source idempotency.">
+  <title>zsh-openshift-aliases &mdash; Engineering Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="hud-static.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <style>
+    .tutorial-main { max-width: 72rem; }
+    .stat-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr));gap:0.7rem;margin:1rem 0; }
+    .stat-card { border:1px solid var(--border);border-top:3px solid var(--cyan);background:var(--bg-card);padding:0.85rem 1rem;border-radius:2px;text-align:center; }
+    .stat-card .stat-val { font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--cyan);line-height:1.1;text-shadow:0 0 18px var(--cyan-glow); }
+    .stat-card .stat-val.accent { color:var(--accent);text-shadow:0 0 18px var(--accent-glow); }
+    .stat-card .stat-val.green  { color:var(--green);text-shadow:0 0 18px rgba(57,255,20,.3); }
+    .stat-card .stat-label { font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-muted);margin-top:0.45rem; }
+    .file-table { width:100%;border-collapse:collapse;margin:0.6rem 0;font-size:12px; }
+    .file-table th { background:var(--bg-secondary);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;text-align:left;padding:7px 10px;border:1px solid var(--border); }
+    .file-table td { padding:6px 10px;border:1px solid var(--border);color:var(--text-dim);vertical-align:middle; }
+    .file-table tr:hover td { background:var(--bg-hover); }
+    .file-table td:first-child { font-family:'Share Tech Mono',monospace;color:var(--accent-light);font-weight:600;white-space:nowrap; }
+    .file-table .num { text-align:right;font-family:'Share Tech Mono',monospace; }
+    .file-table .total-row td { background:var(--bg-secondary);font-weight:700;color:var(--text);border-top:2px solid var(--cyan); }
+    .file-table code { font-size:11px;color:var(--accent-light);background:var(--bg-primary);padding:1px 4px;border-radius:2px; }
+    .feature-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(20rem,1fr));gap:0.65rem;margin:0.8rem 0; }
+    .feature-card { border:1px solid var(--border);border-left:3px solid var(--cyan);background:var(--bg-card);padding:0.7rem 1rem;border-radius:2px; }
+    .feature-card h4 { font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);margin:0 0 0.3rem; }
+    .feature-card p { margin:0;font-size:11px;color:var(--text-dim);line-height:1.55; }
+    .feature-card code { font-size:10.5px;color:var(--accent-light);background:var(--bg-primary);padding:1px 4px;border-radius:2px; }
+    .section-rule { border:none;border-top:1px dashed var(--border);margin:1.8rem 0; }
+  </style>
+</head>
+<body>
+  <div class="app tutorial-app" id="reportApp">
+    <div class="crt-scanline" id="crtH" aria-hidden="true"></div>
+    <div class="crt-scanline-v" id="crtV" aria-hidden="true"></div>
+
+    <header class="tutorial-header">
+      <div class="tutorial-header-inner">
+        <div>
+          <h1 class="tutorial-brand">// ZSH-OPENSHIFT-ALIASES &mdash; ENGINEERING REPORT</h1>
+          <nav class="tutorial-crumbs" aria-label="Breadcrumb">
+            <span class="current">Engineering Report</span>
+            <span class="sep">/</span>
+            <a href="index.html">Docs</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zsh-openshift-aliases" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zpwr" target="_blank" rel="noopener noreferrer">zpwr</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">Meta</a>
+          </nav>
+          <p style="margin:0.35rem 0 0;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.03em;opacity:0.75;">
+            Single-file zsh plugin &middot; 52 <code>oc</code> aliases &middot; <code>ocdev</code> / <code>ocqa</code> login macros &middot; <code>ologin</code> = <code>oc rsh</code> &middot; auto-sourced <code>oc</code> completion &middot; <code>type -ap oc</code> load guard
+          </p>
+        </div>
+        <div class="tutorial-toolbar">
+          <button type="button" class="btn btn-secondary" id="btnTheme" title="Toggle light/dark">Theme</button>
+          <button type="button" class="btn btn-secondary active" id="btnCrt" title="CRT scanline overlay">CRT</button>
+          <button type="button" class="btn btn-secondary active" id="btnNeon" title="Neon border pulse">Neon</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="tutorial-main">
+
+      <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
+      <p class="tutorial-subtitle">
+        <strong>zsh-openshift-aliases</strong> is a single-file zsh plugin that registers <strong>52 short aliases</strong> over the OpenShift <code>oc</code> CLI, <strong>5 helper functions</strong> for replica-stepping and pod lookup, and three login/session shortcuts (<code>ocdev</code>, <code>ocqa</code>, <code>ologin</code>). On source it guards with <code>type -ap -- oc</code>: if no <code>oc</code> executable is on <code>PATH</code> it returns immediately and defines nothing. When <code>oc</code> is present and <code>__start_oc</code> is not already defined it runs <code>source &lt;(oc completion zsh)</code> to wire up native <code>oc</code> tab-completion. The login macros are env-templated &mdash; <code>ocdev</code> expands to <code>oc login ${OCP_DEV_URL} -u ${OCP_USERNAME}</code>. Source: <strong>118 zsh lines</strong> in one <code>.plugin.zsh</code> file. Pinned by <strong>15 <code>@test</code> blocks</strong> across <strong>3 zunit files</strong> (<strong>230 lines</strong>).
+      </p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">52</div><div class="stat-label">oc Aliases</div></div>
+        <div class="stat-card"><div class="stat-val accent">5</div><div class="stat-label">Helper Functions</div></div>
+        <div class="stat-card"><div class="stat-val">118</div><div class="stat-label">Zsh Lines (plugin entry)</div></div>
+        <div class="stat-card"><div class="stat-val green">15</div><div class="stat-label">@test Blocks (zunit)</div></div>
+        <div class="stat-card"><div class="stat-val">3</div><div class="stat-label">Test Files</div></div>
+        <div class="stat-card"><div class="stat-val">230</div><div class="stat-label">Test Lines</div></div>
+        <div class="stat-card"><div class="stat-val accent">3</div><div class="stat-label">Login / Session Macros</div></div>
+        <div class="stat-card"><div class="stat-val">1</div><div class="stat-label">Load Guard (type -ap oc)</div></div>
+      </div>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">~</span>ARCHITECTURE</h2>
+      <p class="tutorial-subtitle">One entry file. No autoload tree, no <code>completions/</code> directory &mdash; completion is delegated to <code>oc</code>'s own generator. The file is a flat sequence of guard &rarr; completion-source &rarr; env-var init &rarr; <code>alias</code> declarations &rarr; <code>fn(){ }</code> definitions.</p>
+
+      <table class="file-table">
+        <thead>
+          <tr><th>File / Group</th><th class="num">Lines</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>zsh-openshift-aliases.plugin.zsh</code></td>
+            <td class="num">118</td>
+            <td>The whole plugin. Sole entry point.</td>
+          </tr>
+          <tr>
+            <td>&nbsp;&middot; load guard</td>
+            <td class="num">3</td>
+            <td><code>type -ap -- oc</code> &mdash; insists on a real executable on <code>PATH</code> (not a shell function); <code>return 1</code> if absent, so the plugin no-ops when <code>oc</code> is not installed.</td>
+          </tr>
+          <tr>
+            <td>&nbsp;&middot; completion source</td>
+            <td class="num">3</td>
+            <td>If <code>__start_oc</code> is not already defined, <code>source &lt;(oc completion zsh)</code> to register <code>oc</code> tab-completion once.</td>
+          </tr>
+          <tr>
+            <td>&nbsp;&middot; env init + login macros</td>
+            <td class="num">6</td>
+            <td>Initializes <code>OCP_USERNAME</code> / <code>OCP_DEV_URL</code> / <code>OCP_QA_URL</code> to empty; declares <code>ocdev</code> / <code>ocqa</code> (env-templated <code>oc login</code>) and <code>ologin</code> (<code>oc rsh</code>).</td>
+          </tr>
+          <tr>
+            <td>&nbsp;&middot; alias declarations</td>
+            <td class="num">52 total</td>
+            <td>52 <code>alias</code> lines grouped by intent: get (<code>og</code>, <code>opod</code>, &hellip;), describe/deploy/logs (<code>odesc</code>, <code>odep</code>, <code>olog</code>, &hellip;), delete (<code>odel</code>, <code>odeldc</code>, &hellip;), export (<code>oexp</code>, <code>opexp</code>, &hellip;), scale (<code>oscaled</code>, <code>ostopd</code>, &hellip;), pod hygiene (<code>opclean</code>, <code>opodr</code>, <code>opodt</code>, <code>obackup</code>).</td>
+          </tr>
+          <tr>
+            <td>&nbsp;&middot; helper functions</td>
+            <td class="num">5 fns</td>
+            <td><code>pod</code> (jsonpath name of a running pod by selector), <code>oincs</code> / <code>oincd</code> (step a statefulset / dc replicas up by 1), <code>odecs</code> / <code>odecd</code> (step down by 1). Each reads the current count via <code>oc get ... -o jsonpath='{.spec.replicas}'</code> then re-scales.</td>
+          </tr>
+          <tr class="total-row">
+            <td>Total source</td>
+            <td class="num">118</td>
+            <td>1 entry file &middot; 52 aliases + 5 functions &middot; pure zsh</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:11px;color:var(--text-muted);">Note: 15 of the 52 aliases wrap an inline <code>_(){ &hellip; ;};_</code> positional-argument shim (e.g. <code>opodo</code>, <code>oscaled</code>, the <code>*exp</code> family) so they can take <code>$1</code> / <code>$@</code> &mdash; zsh aliases cannot otherwise consume positional arguments mid-command.</p>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">$</span>ALIAS CONTRACT</h2>
+      <p class="tutorial-subtitle">Every alias is a thin expansion to an <code>oc</code> invocation. The table is the exact expansion grouped by family. No wrapper logic beyond the inline positional shims.</p>
+
+      <table class="file-table">
+        <thead><tr><th>Family</th><th>Aliases</th><th>Expansion shape</th></tr></thead>
+        <tbody>
+          <tr><td>Login / session</td><td><code>ocdev</code> <code>ocqa</code> <code>ologin</code></td><td><code>oc login ${OCP_DEV_URL} -u ${OCP_USERNAME}</code> / <code>... ${OCP_QA_URL} ...</code> / <code>oc rsh</code></td></tr>
+          <tr><td>Get</td><td><code>og</code> <code>odc</code> <code>osts</code> <code>ohpa</code> <code>opod</code> <code>osvc</code> <code>opvc</code> <code>ois</code> <code>obc</code> <code>oall</code> <code>oalln</code> <code>opodo</code> <code>opd</code> <code>oimg</code> <code>olcp</code> <code>olp</code></td><td><code>oc get [KIND] [-o wide | -o jsonpath=... | -l app=...]</code></td></tr>
+          <tr><td>Describe / deploy / logs / copy</td><td><code>odesc</code> <code>odhist</code> <code>odep</code> <code>oroll</code> <code>orhist</code> <code>olog</code> <code>osync</code> <code>ocp</code> <code>ovol</code></td><td><code>oc describe</code> / <code>oc apply -f</code> / <code>oc rollout {latest,history} dc</code> / <code>oc logs -f</code> / <code>oc rsync</code> / <code>oc cp</code> / <code>oc volume dc --all</code></td></tr>
+          <tr><td>Delete</td><td><code>odel</code> <code>odelo</code> <code>odela</code> <code>odeldc</code> <code>odelsts</code> <code>odelpod</code> <code>odelsvc</code> <code>odelbc</code> <code>odelpvc</code></td><td><code>oc delete [KIND] [-l app=...]</code></td></tr>
+          <tr><td>Export YAML</td><td><code>oexp</code> <code>opexp</code> <code>odexp</code> <code>osexp</code> <code>ocexp</code> <code>ovexp</code></td><td><code>oc get [KIND] $1 -o yaml --export</code></td></tr>
+          <tr><td>Scale</td><td><code>oscaled</code> <code>oscales</code> <code>ostopd</code> <code>ostartd</code> <code>ostarts</code> <code>ostops</code></td><td><code>oc scale --replicas=N {dc|statefulsets}</code></td></tr>
+          <tr><td>Pod hygiene / backup</td><td><code>opclean</code> <code>opodr</code> <code>opodt</code> <code>obackup</code></td><td>force-delete <code>Terminating</code> pods / jsonpath phase filters / per-object-type YAML dump</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">=</span>ENVIRONMENT</h2>
+      <p class="tutorial-subtitle">Three variables drive the login macros. The plugin sets all three to the empty string on source (lines 11&ndash;13), so values must be exported <em>after</em> the plugin loads.</p>
+
+      <table class="file-table">
+        <thead><tr><th>Variable</th><th>Default</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td><code>OCP_USERNAME</code></td><td><em>(empty)</em></td><td>Username passed to <code>oc login -u</code> by both <code>ocdev</code> and <code>ocqa</code>.</td></tr>
+          <tr><td><code>OCP_DEV_URL</code></td><td><em>(empty)</em></td><td>Cluster API URL <code>ocdev</code> logs into.</td></tr>
+          <tr><td><code>OCP_QA_URL</code></td><td><em>(empty)</em></td><td>Cluster API URL <code>ocqa</code> logs into.</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">#</span>TEST COVERAGE</h2>
+      <p class="tutorial-subtitle"><strong>15</strong> <code>@test</code> blocks across <strong>3</strong> zunit files (<strong>230 lines</strong>). The alias suite stages a fake <code>oc</code> executable on a tmpdir-prefixed <code>PATH</code> so the <code>type -ap -- oc</code> guard passes, then sources the plugin and asserts alias presence and expansion shape. The CI suite runs them under <a href="https://github.com/MenkeTechnologies/zunit" target="_blank" rel="noopener noreferrer">zunit</a> &mdash; no live OpenShift cluster required.</p>
+
+      <table class="file-table">
+        <thead><tr><th>File</th><th class="num">Tests</th><th>Pins</th></tr></thead>
+        <tbody>
+          <tr><td><code>t-aliases.zsh</code></td><td class="num">10</td><td>Sourcing registers &gt;40 <code>o*</code> aliases; <code>ocdev</code> / <code>ocqa</code> reference <code>OCP_*_URL</code> + <code>OCP_USERNAME</code> + <code>oc login</code>; <code>ologin</code> is <code>oc rsh</code>; <code>odel</code> is <code>oc delete</code> (catches name-vs-action drift); <code>odc</code> / <code>obc</code> are <code>oc get ... -o wide</code>; <code>ocexp</code> passes <code>--export</code>; graceful degradation when <code>oc</code> is missing (shell stays alive); re-source idempotency (same alias count).</td></tr>
+          <tr><td><code>t-contract.zsh</code></td><td class="num">3</td><td>Entrypoint stem matches plugin dir basename (accepting the <code>zsh-</code> prefix variant); entrypoint parses under <code>zsh -n</code>; every <code>_*</code> completion file (if any) starts with <code>#compdef</code>.</td></tr>
+          <tr><td><code>t-syntax.zsh</code></td><td class="num">2</td><td><code>zsh -n</code> over every <code>*.zsh</code> in the plugin directory.</td></tr>
+          <tr class="total-row"><td>Total</td><td class="num">15</td><td>3 zunit files &middot; alias-surface + install-contract + syntax</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">!</span>DESIGN DECISIONS</h2>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>No-op when oc is absent</h4>
+          <p>The <code>type -ap -- oc</code> guard insists on a real executable on <code>PATH</code> &mdash; not a shell function or alias &mdash; and <code>return 1</code>s if missing. This lets the plugin be loaded unconditionally in a plugin manager array without a per-host <code>command -v oc</code> wrapper in <code>.zshrc</code>.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Delegate completion to oc</h4>
+          <p>Rather than ship a hand-written <code>_oc</code> compdef, the plugin runs <code>source &lt;(oc completion zsh)</code> &mdash; the completion is whatever <code>oc</code>'s own generator emits, so it never drifts from the installed <code>oc</code> version. Guarded on <code>__start_oc</code> not already existing to avoid double-sourcing.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Env-templated login macros</h4>
+          <p><code>ocdev</code> / <code>ocqa</code> are single-quoted aliases that expand <code>${OCP_DEV_URL}</code> / <code>${OCP_QA_URL}</code> / <code>${OCP_USERNAME}</code> at call time, not source time. Change the env vars between invocations and the next <code>ocdev</code> targets the new cluster &mdash; no re-source needed.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Inline _(){ } positional shims</h4>
+          <p>Zsh aliases cannot consume positional args mid-command. 15 aliases wrap an inline anonymous-ish <code>_(){ oc ... $1 ... ;};_</code> function so <code>opodo myapp</code> / <code>oscaled 3 web</code> / <code>ocexp myconfig</code> place the argument where <code>oc</code> needs it instead of appending it at the end.</p>
+        </div>
+        <div class="feature-card">
+          <h4>-o wide on tabular gets</h4>
+          <p>The pod / svc / pvc / dc / sts / is / bc getters default to <code>-o wide</code> so the node, IP, and selector columns <code>oc</code> hides in its narrow default are always shown. One fewer flag to type for the common case.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Replica stepping as functions</h4>
+          <p><code>oincd</code> / <code>oincs</code> / <code>odecd</code> / <code>odecs</code> need to read the current <code>.spec.replicas</code> before scaling &mdash; that round-trip can't be expressed as a static alias, so they are real functions. <code>pod</code> is a function for the same reason: it composes a jsonpath query from a label selector argument.</p>
+        </div>
+      </div>
+
+      <hr class="section-rule">
+
+      <h2 class="tutorial-title"><span class="step-hash">@</span>FOOTPRINT</h2>
+      <ul style="font-size:12px;color:var(--text-dim);line-height:1.7;">
+        <li><strong>Disk</strong>: one 118-line <code>.plugin.zsh</code> file plus <code>tests/</code> (3 files, 230 lines). No completion directory, no autoload tree, no compiled artifacts.</li>
+        <li><strong>Startup cost</strong>: the <code>type -ap oc</code> guard, a one-time <code>source &lt;(oc completion zsh)</code> when <code>oc</code> is present and not yet completed, and 52 <code>alias</code> + 5 function definitions. Zero cost on hosts without <code>oc</code> (early <code>return 1</code>).</li>
+        <li><strong>Runtime cost</strong>: each alias is a direct <code>oc</code> invocation &mdash; one subprocess. The replica-stepping functions issue two <code>oc</code> calls (a <code>get</code> to read replicas, a <code>scale</code> to set them).</li>
+        <li><strong>External tools</strong>: <code>oc</code> (required, the load gate); the pod-hygiene / image-tally aliases also shell out to <code>tr</code>, <code>sort</code>, <code>uniq</code>, <code>awk</code>, <code>grep</code> for output post-processing.</li>
+        <li><strong>Config surface</strong>: three <code>OCP_*</code> env vars, all for the login macros. No <code>zstyle</code>, no <code>bindkey</code>, no ZLE widgets.</li>
+      </ul>
+
+    </main>
+
+    <footer style="text-align:center;padding:2rem;font-size:10px;color:var(--text-muted);font-family:'Orbitron',sans-serif;letter-spacing:2px;">
+      ZSH-OPENSHIFT-ALIASES ENGINEERING REPORT &middot; 118 ZSH LINES &middot; 52 OC ALIASES &middot; 5 FUNCTIONS &middot; 15 ZUNIT TESTS &middot; 3 TEST FILES &middot; OC COMPLETION &middot; MENKETECHNOLOGIES
+    </footer>
+  </div>
+
+  <script>
+    const html = document.documentElement;
+    const btnTheme = document.getElementById('btnTheme');
+    const btnCrt = document.getElementById('btnCrt');
+    const btnNeon = document.getElementById('btnNeon');
+    const crtH = document.getElementById('crtH');
+    const crtV = document.getElementById('crtV');
+    btnTheme?.addEventListener('click', () => {
+      html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    });
+    btnCrt?.addEventListener('click', () => {
+      btnCrt.classList.toggle('active');
+      const on = btnCrt.classList.contains('active');
+      if (crtH) crtH.style.display = on ? '' : 'none';
+      if (crtV) crtV.style.display = on ? '' : 'none';
+    });
+    btnNeon?.addEventListener('click', () => {
+      btnNeon.classList.toggle('active');
+      document.querySelector('.app')?.classList.toggle('neon-off');
+    });
+  </script>
+</body>
+</html>

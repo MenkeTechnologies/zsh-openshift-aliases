@@ -14,6 +14,8 @@
 <code>// `oc` IS A WORD. `og`, `ologin`, `ocdev`, `ocqa` ARE THE GRID. 52 ALIASES. ONE PLUGIN.</code>
 </p>
 
+### [`Read the Docs`](https://menketechnologies.github.io/zsh-openshift-aliases/) &middot; [`Engineering Report`](https://menketechnologies.github.io/zsh-openshift-aliases/report.html)
+
 ---
 
 [![Aliases](https://img.shields.io/badge/aliases-52-ff2a6d.svg)](zsh-openshift-aliases.plugin.zsh)

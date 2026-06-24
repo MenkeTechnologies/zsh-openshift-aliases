@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="zsh-openshift-aliases — 52 short zsh aliases over the OpenShift oc CLI plus env-driven login macros (ocdev/ocqa), an oc rsh shortcut (ologin), and auto-sourced oc tab-completion. og=oc get, odep=oc apply -f, odesc=oc describe, olog=oc logs -f, odel=oc delete; scale/export/delete/rollout families; 5 replica-stepping helper functions. No-ops when oc is missing — safe to load unconditionally.">
+  <title>zsh-openshift-aliases — Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="hud-static.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <style>
+    .tutorial-main { max-width: 68rem; }
+    .docs-build-line { margin: 0.35rem 0 0; font-family: 'Share Tech Mono', ui-monospace, monospace; font-size: 11px; color: var(--text-dim); letter-spacing: 0.03em; max-width: 42rem; opacity: 0.75; }
+    .hub-scheme-strip { border-bottom: 1px dashed var(--border); background: color-mix(in srgb, var(--bg-secondary) 85%, transparent); padding: 0.55rem 1.5rem 0.65rem; position: relative; }
+    .hub-scheme-strip-inner { max-width: 68rem; margin: 0 auto; display: flex; align-items: center; gap: 0.85rem; }
+    .hub-scheme-strip .hud-scheme-label { flex: 0 0 auto; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); text-align: left; }
+    .hub-scheme-strip .scheme-grid { flex: 1 1 auto; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+    @media (max-width: 720px) { .hub-scheme-strip-inner { flex-direction: column; align-items: stretch; } .hub-scheme-strip .scheme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .example-tbl { width: 100%; border-collapse: collapse; margin: 0.6rem 0; font-size: 12.5px; }
+    .example-tbl td { padding: 6px 10px; border: 1px solid var(--border); vertical-align: top; color: var(--text-dim); }
+    .example-tbl td:first-child { width: 28%; color: var(--cyan); font-family: 'Share Tech Mono', monospace; }
+    .example-tbl td code { color: var(--accent-light); background: var(--bg); padding: 1px 5px; font-size: 12px; }
+    .sibling-list { columns: 2; column-gap: 1.5rem; padding-left: 1.1rem; }
+    .sibling-list li { break-inside: avoid; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app tutorial-app" id="docsApp">
+    <div class="crt-scanline" id="crtH" aria-hidden="true"></div>
+    <div class="crt-scanline-v" id="crtV" aria-hidden="true"></div>
+
+    <header class="tutorial-header">
+      <div class="tutorial-header-inner">
+        <div>
+          <h1 class="tutorial-brand">// ZSH-OPENSHIFT-ALIASES &mdash; 52 OC ALIASES + LOGIN MACROS + OC COMPLETION</h1>
+          <nav class="tutorial-crumbs" aria-label="Breadcrumb">
+            <span class="current">Docs</span>
+            <span class="sep">/</span>
+            <a href="report.html">Engineering Report</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zsh-openshift-aliases" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zpwr" target="_blank" rel="noopener noreferrer">zpwr</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">Meta</a>
+          </nav>
+          <p class="docs-build-line">zsh plugin &middot; 52 short aliases over the OpenShift <code>oc</code> CLI &middot; env-driven <code>ocdev</code> / <code>ocqa</code> login macros &middot; auto-sourced <code>oc</code> tab-completion &middot; no-op when <code>oc</code> is absent</p>
+        </div>
+        <div class="tutorial-toolbar">
+          <button type="button" class="btn btn-secondary" id="btnTheme" title="Toggle light/dark">Theme</button>
+          <button type="button" class="btn btn-secondary active" id="btnCrt" title="CRT scanline overlay">CRT</button>
+          <button type="button" class="btn btn-secondary active" id="btnNeon" title="Neon border pulse">Neon</button>
+          <a class="btn btn-secondary" href="https://github.com/MenkeTechnologies/zsh-openshift-aliases" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a class="btn btn-secondary" href="https://github.com/MenkeTechnologies/zsh-openshift-aliases/issues" target="_blank" rel="noopener noreferrer">Issues</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="hub-scheme-strip">
+      <div class="hub-scheme-strip-inner">
+        <span class="hud-scheme-label">// Color scheme</span>
+        <div class="scheme-grid" id="hudSchemeGrid"></div>
+      </div>
+    </div>
+
+    <main class="tutorial-main">
+      <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>ZSH-OPENSHIFT-ALIASES</h2>
+      <p class="tutorial-subtitle"><strong>Drive your OpenShift cluster from zsh with two-to-six-character aliases.</strong> <code>og pods</code> instead of <code>oc get pods</code>, <code>odep foo.yaml</code> instead of <code>oc apply -f foo.yaml</code>, <code>ocdev</code> / <code>ocqa</code> for one-keystroke env-driven login, <code>ologin</code> for <code>oc rsh</code> into a pod. Tab-completion for <code>oc</code> is auto-sourced when the binary is on <code>PATH</code>; the whole plugin no-ops when <code>oc</code> is missing, so it is safe to load unconditionally.</p>
+
+      <section class="tutorial-section">
+        <h2>Install</h2>
+<pre># Zinit
+zinit ice lucid nocompile
+zinit load MenkeTechnologies/zsh-openshift-aliases
+
+# Oh My Zsh
+git clone https://github.com/MenkeTechnologies/zsh-openshift-aliases \
+    "$HOME/.oh-my-zsh/custom/plugins/zsh-openshift-aliases"
+# then add zsh-openshift-aliases to plugins=(...) in ~/.zshrc
+
+# Manual
+git clone https://github.com/MenkeTechnologies/zsh-openshift-aliases
+source zsh-openshift-aliases/zsh-openshift-aliases.plugin.zsh</pre>
+        <p>The plugin guards on <code>type -ap -- oc</code> &mdash; if no <code>oc</code> executable is on <code>PATH</code> it returns immediately and registers nothing. When <code>oc</code> is present and the <code>__start_oc</code> completion function is not already defined, it runs <code>source &lt;(oc completion zsh)</code> to wire up <code>oc</code> tab-completion.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Configuration</h2>
+        <p>Three environment variables drive the login macros. The plugin initializes all three to the empty string when it sources, so set them <em>after</em> the plugin loads &mdash; a value exported before sourcing is overwritten on load.</p>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>OCP_USERNAME</code></td><td>username passed to <code>oc login -u</code> by both <code>ocdev</code> and <code>ocqa</code></td></tr>
+            <tr><td><code>OCP_DEV_URL</code></td><td>cluster API URL <code>ocdev</code> logs into (e.g. <code>https://api.dev.example.com:6443</code>)</td></tr>
+            <tr><td><code>OCP_QA_URL</code></td><td>cluster API URL <code>ocqa</code> logs into</td></tr>
+          </tbody>
+        </table>
+<pre># in ~/.zshrc, AFTER the plugin is sourced
+export OCP_USERNAME='your-username'
+export OCP_DEV_URL='https://api.dev.example.com:6443'
+export OCP_QA_URL='https://api.qa.example.com:6443'</pre>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Login &amp; session</h2>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>ocdev</code></td><td><code>oc login ${OCP_DEV_URL} -u ${OCP_USERNAME}</code> &mdash; log into the dev cluster</td></tr>
+            <tr><td><code>ocqa</code></td><td><code>oc login ${OCP_QA_URL} -u ${OCP_USERNAME}</code> &mdash; log into the QA cluster</td></tr>
+            <tr><td><code>ologin POD</code></td><td><code>oc rsh</code> &mdash; open an interactive remote shell into a running pod</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Get resources</h2>
+        <p>Short reads over <code>oc get</code>. The <code>-o wide</code> variants add the extra columns (node, IP) <code>oc</code> hides by default.</p>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>og ARGS</code></td><td><code>oc get</code> &mdash; the base getter</td></tr>
+            <tr><td><code>odc</code></td><td><code>oc get dc -o wide</code> &mdash; deployment configs</td></tr>
+            <tr><td><code>osts</code></td><td><code>oc get sts -o wide</code> &mdash; statefulsets</td></tr>
+            <tr><td><code>ohpa</code></td><td><code>oc get hpa</code> &mdash; horizontal pod autoscalers</td></tr>
+            <tr><td><code>opod</code></td><td><code>oc get pod -o wide</code></td></tr>
+            <tr><td><code>osvc</code></td><td><code>oc get svc -o wide</code></td></tr>
+            <tr><td><code>opvc</code></td><td><code>oc get pvc -o wide</code></td></tr>
+            <tr><td><code>ois</code></td><td><code>oc get is -o wide</code> &mdash; image streams</td></tr>
+            <tr><td><code>obc</code></td><td><code>oc get bc -o wide</code> &mdash; build configs</td></tr>
+            <tr><td><code>oall</code></td><td><code>oc get all -l run=</code> &mdash; everything for a given <code>run</code> label</td></tr>
+            <tr><td><code>oalln APP</code></td><td><code>oc get all -l run=APP -o name</code> &mdash; names only</td></tr>
+            <tr><td><code>opodo APP</code></td><td><code>oc get pod -l app=APP -o wide</code> &mdash; pods for an app label</td></tr>
+            <tr><td><code>opd APP</code></td><td><code>oc get pod -l app=APP -o jsonpath='{ .metadata.name }'</code></td></tr>
+            <tr><td><code>oimg</code></td><td><code>oc get pods -o jsonpath='{..image}'</code> piped through <code>tr</code>/<code>sort</code>/<code>uniq -c</code> &mdash; image usage tally</td></tr>
+            <tr><td><code>olcp</code></td><td><code>oc get pods</code> jsonpath dump of pod name &rarr; container images, sorted</td></tr>
+            <tr><td><code>olp APP</code></td><td><code>oc get pods -o jsonpath='{..image}' -l app=APP</code> &mdash; images for an app label</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Describe, deploy, logs, copy</h2>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>odesc ARGS</code></td><td><code>oc describe</code></td></tr>
+            <tr><td><code>odhist</code></td><td><code>oc rollout history dc</code></td></tr>
+            <tr><td><code>odep FILE</code></td><td><code>oc apply -f FILE</code> &mdash; apply a manifest</td></tr>
+            <tr><td><code>oroll DC</code></td><td><code>oc rollout latest dc/DC</code> &mdash; trigger a new rollout</td></tr>
+            <tr><td><code>orhist DC</code></td><td><code>oc rollout history dc/DC</code></td></tr>
+            <tr><td><code>olog ARGS</code></td><td><code>oc logs -f</code> &mdash; follow logs</td></tr>
+            <tr><td><code>osync ARGS</code></td><td><code>oc rsync</code></td></tr>
+            <tr><td><code>ocp ARGS</code></td><td><code>oc cp</code> &mdash; copy files in/out of a pod</td></tr>
+            <tr><td><code>ovol</code></td><td><code>oc volume dc --all</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Delete resources</h2>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>odel ARGS</code></td><td><code>oc delete</code> &mdash; the base deleter</td></tr>
+            <tr><td><code>odelo KIND APP</code></td><td><code>oc delete KIND -l app=APP</code></td></tr>
+            <tr><td><code>odela APP</code></td><td><code>oc delete all -l app=APP</code></td></tr>
+            <tr><td><code>odeldc</code></td><td><code>oc delete dc</code></td></tr>
+            <tr><td><code>odelsts</code></td><td><code>oc delete sts</code></td></tr>
+            <tr><td><code>odelpod</code></td><td><code>oc delete pod</code></td></tr>
+            <tr><td><code>odelsvc</code></td><td><code>oc delete svc</code></td></tr>
+            <tr><td><code>odelbc</code></td><td><code>oc delete bc</code></td></tr>
+            <tr><td><code>odelpvc</code></td><td><code>oc delete pvc</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Export YAML config</h2>
+        <p>Each dumps a resource as YAML with <code>--export</code> for re-applying elsewhere.</p>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>oexp ARGS</code></td><td><code>oc get ARGS -o yaml --export</code></td></tr>
+            <tr><td><code>opexp POD</code></td><td><code>oc get pod POD -o yaml --export</code></td></tr>
+            <tr><td><code>odexp DC</code></td><td><code>oc get dc DC -o yaml --export</code></td></tr>
+            <tr><td><code>osexp STS</code></td><td><code>oc get sts STS -o yaml --export</code></td></tr>
+            <tr><td><code>ocexp CM</code></td><td><code>oc get cm CM -o yaml --export</code> &mdash; config map</td></tr>
+            <tr><td><code>ovexp PVC</code></td><td><code>oc get pvc PVC -o yaml --export</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Scaling</h2>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>oscaled N DC</code></td><td><code>oc scale --replicas=N dc DC</code></td></tr>
+            <tr><td><code>oscales N STS</code></td><td><code>oc scale --replicas=N statefulsets STS</code></td></tr>
+            <tr><td><code>ostopd DC</code></td><td><code>oc scale --replicas=0 dc</code> &mdash; scale a dc to zero</td></tr>
+            <tr><td><code>ostartd DC</code></td><td><code>oc scale --replicas=1 dc</code></td></tr>
+            <tr><td><code>ostarts STS</code></td><td><code>oc scale --replicas=1 statefulsets</code></td></tr>
+            <tr><td><code>ostops STS</code></td><td><code>oc scale --replicas=0 statefulsets</code></td></tr>
+          </tbody>
+        </table>
+        <p>Five shell functions step replica counts by one, reading the current count via <code>oc get ... -o jsonpath='{.spec.replicas}'</code> then re-scaling:</p>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>oincd DC</code> / <code>oincs STS</code></td><td>increment a deployment config / statefulset replica count by 1</td></tr>
+            <tr><td><code>odecd DC</code> / <code>odecs STS</code></td><td>decrement a deployment config / statefulset replica count by 1</td></tr>
+            <tr><td><code>pod SELECTOR</code></td><td>print the name of the running pod matching a label selector via jsonpath</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Pod hygiene &amp; backup</h2>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>opclean</code></td><td>force-delete every pod stuck in <code>Terminating</code> (<code>--grace-period=0 --force</code>)</td></tr>
+            <tr><td><code>opodr</code></td><td>jsonpath list of pod names in phase <code>Running</code></td></tr>
+            <tr><td><code>opodt</code></td><td>jsonpath list of pod names in phase <code>Terminating</code></td></tr>
+            <tr><td><code>obackup</code></td><td>dump <code>all</code> + per-object-type YAML (rolebindings, serviceaccounts, secrets, cm, pvc, statefulsets, hpa, deployments, &hellip;) into the current directory for project backup</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Workflow</h2>
+<pre># log into the dev cluster (set OCP_* first)
+ocdev
+
+# list pods with node + IP columns
+opod
+
+# tail logs of a deployment, follow
+olog deployment/web
+
+# apply a manifest
+odep web.yaml
+
+# scale a deployment config to 3, or step it up by 1
+oscaled 3 web
+oincd web
+
+# remote shell into a pod
+ologin web-7d9f8c-abcde
+
+# force-clear stuck Terminating pods
+opclean</pre>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Engineering report</h2>
+        <p>For the full breakdown &mdash; the exact <code>oc</code> command each alias expands to, the load guard, the <code>oc completion zsh</code> sourcing, the helper-function internals, and the zunit test map &mdash; see the <a href="report.html">engineering report</a>.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Sibling plugins</h2>
+        <p>Part of the MenkeTechnologies zsh plugin family &mdash; the <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">MenkeTechnologiesMeta</a> umbrella:</p>
+        <ul class="sibling-list">
+          <li><a href="https://github.com/MenkeTechnologies/zsh-learn" target="_blank" rel="noopener noreferrer">zsh-learn</a> &mdash; MySQL-backed flashcard / snippet store</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-git-acp" target="_blank" rel="noopener noreferrer">zsh-git-acp</a> &mdash; git aliases + add/commit/push keybindings</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-nginx" target="_blank" rel="noopener noreferrer">zsh-nginx</a> &mdash; nginx commands + service-wrapper aliases</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-cargo-completion" target="_blank" rel="noopener noreferrer">zsh-cargo-completion</a> &mdash; live <code>cargo add</code> / <code>cargo install</code> completion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-better-npm-completion" target="_blank" rel="noopener noreferrer">zsh-better-npm-completion</a> &mdash; cache-aware <code>npm install</code> completion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-more-completions" target="_blank" rel="noopener noreferrer">zsh-more-completions</a> &mdash; mega completion corpus</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-expand" target="_blank" rel="noopener noreferrer">zsh-expand</a> &mdash; spacebar alias / variable expansion</li>
+          <li><a href="https://github.com/MenkeTechnologies/zsh-sudo" target="_blank" rel="noopener noreferrer">zsh-sudo</a> &mdash; ESC ESC to prepend sudo</li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+  <script src="hud-theme.js"></script>
+</body>
+</html>

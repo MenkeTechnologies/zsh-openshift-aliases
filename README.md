@@ -19,7 +19,7 @@
 ---
 
 [![Aliases](https://img.shields.io/badge/aliases-53-ff2a6d.svg)](zsh-openshift-aliases.plugin.zsh)
-[![Tag](https://img.shields.io/badge/tag-v0.1.0-39ff14.svg)](https://github.com/MenkeTechnologies/zsh-openshift-aliases/tags)
+[![Tag](https://img.shields.io/github/v/tag/MenkeTechnologies/zsh-openshift-aliases?sort=semver&label=tag&color=39ff14)](https://github.com/MenkeTechnologies/zsh-openshift-aliases/tags)
 [![Shell](https://img.shields.io/badge/shell-zsh-05d9e8.svg)](#install)
 [![Tool](https://img.shields.io/badge/needs-oc-d300c5.svg)](https://github.com/openshift/oc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](license.md)

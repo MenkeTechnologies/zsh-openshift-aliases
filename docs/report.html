@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="zsh-openshift-aliases — Engineering report. 118-line single-file zsh plugin: 52 aliases over the OpenShift oc CLI, 5 helper functions, env-driven ocdev/ocqa login macros, ologin (oc rsh), and auto-sourced oc completion behind a type -ap oc load guard. 15 zunit @test blocks across 3 t-*.zsh files (230 lines) pin alias presence, the login-macro env-var contract, oc-missing graceful degradation, and re-source idempotency.">
+  <meta name="description" content="zsh-openshift-aliases — Engineering report. 118-line single-file zsh plugin: 53 aliases over the OpenShift oc CLI, 5 helper functions, env-driven ocdev/ocqa login macros, ologin (oc rsh), and auto-sourced oc completion behind a type -ap oc load guard. 13 zunit @test blocks across 3 t-*.zsh files (230 lines) pin alias presence, the login-macro env-var contract, oc-missing graceful degradation, and re-source idempotency.">
   <title>zsh-openshift-aliases &mdash; Engineering Report</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,7 +56,7 @@
             <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">Meta</a>
           </nav>
           <p style="margin:0.35rem 0 0;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.03em;opacity:0.75;">
-            Single-file zsh plugin &middot; 52 <code>oc</code> aliases &middot; <code>ocdev</code> / <code>ocqa</code> login macros &middot; <code>ologin</code> = <code>oc rsh</code> &middot; auto-sourced <code>oc</code> completion &middot; <code>type -ap oc</code> load guard
+            Single-file zsh plugin &middot; 53 <code>oc</code> aliases &middot; <code>ocdev</code> / <code>ocqa</code> login macros &middot; <code>ologin</code> = <code>oc rsh</code> &middot; auto-sourced <code>oc</code> completion &middot; <code>type -ap oc</code> load guard
           </p>
         </div>
         <div class="tutorial-toolbar">
@@ -71,14 +71,14 @@
 
       <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
       <p class="tutorial-subtitle">
-        <strong>zsh-openshift-aliases</strong> is a single-file zsh plugin that registers <strong>52 short aliases</strong> over the OpenShift <code>oc</code> CLI, <strong>5 helper functions</strong> for replica-stepping and pod lookup, and three login/session shortcuts (<code>ocdev</code>, <code>ocqa</code>, <code>ologin</code>). On source it guards with <code>type -ap -- oc</code>: if no <code>oc</code> executable is on <code>PATH</code> it returns immediately and defines nothing. When <code>oc</code> is present and <code>__start_oc</code> is not already defined it runs <code>source &lt;(oc completion zsh)</code> to wire up native <code>oc</code> tab-completion. The login macros are env-templated &mdash; <code>ocdev</code> expands to <code>oc login ${OCP_DEV_URL} -u ${OCP_USERNAME}</code>. Source: <strong>118 zsh lines</strong> in one <code>.plugin.zsh</code> file. Pinned by <strong>15 <code>@test</code> blocks</strong> across <strong>3 zunit files</strong> (<strong>230 lines</strong>).
+        <strong>zsh-openshift-aliases</strong> is a single-file zsh plugin that registers <strong>53 short aliases</strong> over the OpenShift <code>oc</code> CLI, <strong>5 helper functions</strong> for replica-stepping and pod lookup, and three login/session shortcuts (<code>ocdev</code>, <code>ocqa</code>, <code>ologin</code>). On source it guards with <code>type -ap -- oc</code>: if no <code>oc</code> executable is on <code>PATH</code> it returns immediately and defines nothing. When <code>oc</code> is present and <code>__start_oc</code> is not already defined it runs <code>source &lt;(oc completion zsh)</code> to wire up native <code>oc</code> tab-completion. The login macros are env-templated &mdash; <code>ocdev</code> expands to <code>oc login ${OCP_DEV_URL} -u ${OCP_USERNAME}</code>. Source: <strong>118 zsh lines</strong> in one <code>.plugin.zsh</code> file. Pinned by <strong>13 <code>@test</code> blocks</strong> across <strong>3 zunit files</strong> (<strong>230 lines</strong>).
       </p>
 
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-val">52</div><div class="stat-label">oc Aliases</div></div>
+        <div class="stat-card"><div class="stat-val">53</div><div class="stat-label">oc Aliases</div></div>
         <div class="stat-card"><div class="stat-val accent">5</div><div class="stat-label">Helper Functions</div></div>
         <div class="stat-card"><div class="stat-val">118</div><div class="stat-label">Zsh Lines (plugin entry)</div></div>
-        <div class="stat-card"><div class="stat-val green">15</div><div class="stat-label">@test Blocks (zunit)</div></div>
+        <div class="stat-card"><div class="stat-val green">13</div><div class="stat-label">@test Blocks (zunit)</div></div>
         <div class="stat-card"><div class="stat-val">3</div><div class="stat-label">Test Files</div></div>
         <div class="stat-card"><div class="stat-val">230</div><div class="stat-label">Test Lines</div></div>
         <div class="stat-card"><div class="stat-val accent">3</div><div class="stat-label">Login / Session Macros</div></div>
@@ -117,8 +117,8 @@
           </tr>
           <tr>
             <td>&nbsp;&middot; alias declarations</td>
-            <td class="num">52 total</td>
-            <td>52 <code>alias</code> lines grouped by intent: get (<code>og</code>, <code>opod</code>, &hellip;), describe/deploy/logs (<code>odesc</code>, <code>odep</code>, <code>olog</code>, &hellip;), delete (<code>odel</code>, <code>odeldc</code>, &hellip;), export (<code>oexp</code>, <code>opexp</code>, &hellip;), scale (<code>oscaled</code>, <code>ostopd</code>, &hellip;), pod hygiene (<code>opclean</code>, <code>opodr</code>, <code>opodt</code>, <code>obackup</code>).</td>
+            <td class="num">53 total</td>
+            <td>53 <code>alias</code> lines grouped by intent: get (<code>og</code>, <code>opod</code>, &hellip;), describe/deploy/logs (<code>odesc</code>, <code>odep</code>, <code>olog</code>, &hellip;), delete (<code>odel</code>, <code>odeldc</code>, &hellip;), export (<code>oexp</code>, <code>opexp</code>, &hellip;), scale (<code>oscaled</code>, <code>ostopd</code>, &hellip;), pod hygiene (<code>opclean</code>, <code>opodr</code>, <code>opodt</code>, <code>obackup</code>).</td>
           </tr>
           <tr>
             <td>&nbsp;&middot; helper functions</td>
@@ -128,11 +128,11 @@
           <tr class="total-row">
             <td>Total source</td>
             <td class="num">118</td>
-            <td>1 entry file &middot; 52 aliases + 5 functions &middot; pure zsh</td>
+            <td>1 entry file &middot; 53 aliases + 5 functions &middot; pure zsh</td>
           </tr>
         </tbody>
       </table>
-      <p style="font-size:11px;color:var(--text-muted);">Note: 15 of the 52 aliases wrap an inline <code>_(){ &hellip; ;};_</code> positional-argument shim (e.g. <code>opodo</code>, <code>oscaled</code>, the <code>*exp</code> family) so they can take <code>$1</code> / <code>$@</code> &mdash; zsh aliases cannot otherwise consume positional arguments mid-command.</p>
+      <p style="font-size:11px;color:var(--text-muted);">Note: 15 of the 53 aliases wrap an inline <code>_(){ &hellip; ;};_</code> positional-argument shim (e.g. <code>opodo</code>, <code>oscaled</code>, the <code>*exp</code> family) so they can take <code>$1</code> / <code>$@</code> &mdash; zsh aliases cannot otherwise consume positional arguments mid-command.</p>
 
       <hr class="section-rule">
 
@@ -169,15 +169,15 @@
       <hr class="section-rule">
 
       <h2 class="tutorial-title"><span class="step-hash">#</span>TEST COVERAGE</h2>
-      <p class="tutorial-subtitle"><strong>15</strong> <code>@test</code> blocks across <strong>3</strong> zunit files (<strong>230 lines</strong>). The alias suite stages a fake <code>oc</code> executable on a tmpdir-prefixed <code>PATH</code> so the <code>type -ap -- oc</code> guard passes, then sources the plugin and asserts alias presence and expansion shape. The CI suite runs them under <a href="https://github.com/MenkeTechnologies/zunit" target="_blank" rel="noopener noreferrer">zunit</a> &mdash; no live OpenShift cluster required.</p>
+      <p class="tutorial-subtitle"><strong>13</strong> <code>@test</code> blocks across <strong>3</strong> zunit files (<strong>230 lines</strong>). The alias suite stages a fake <code>oc</code> executable on a tmpdir-prefixed <code>PATH</code> so the <code>type -ap -- oc</code> guard passes, then sources the plugin and asserts alias presence and expansion shape. The CI suite runs them under <a href="https://github.com/MenkeTechnologies/zunit" target="_blank" rel="noopener noreferrer">zunit</a> &mdash; no live OpenShift cluster required.</p>
 
       <table class="file-table">
         <thead><tr><th>File</th><th class="num">Tests</th><th>Pins</th></tr></thead>
         <tbody>
-          <tr><td><code>t-aliases.zsh</code></td><td class="num">10</td><td>Sourcing registers &gt;40 <code>o*</code> aliases; <code>ocdev</code> / <code>ocqa</code> reference <code>OCP_*_URL</code> + <code>OCP_USERNAME</code> + <code>oc login</code>; <code>ologin</code> is <code>oc rsh</code>; <code>odel</code> is <code>oc delete</code> (catches name-vs-action drift); <code>odc</code> / <code>obc</code> are <code>oc get ... -o wide</code>; <code>ocexp</code> passes <code>--export</code>; graceful degradation when <code>oc</code> is missing (shell stays alive); re-source idempotency (same alias count).</td></tr>
+          <tr><td><code>t-aliases.zsh</code></td><td class="num">9</td><td>Sourcing registers &gt;40 <code>o*</code> aliases; <code>ocdev</code> / <code>ocqa</code> reference <code>OCP_*_URL</code> + <code>OCP_USERNAME</code> + <code>oc login</code>; <code>ologin</code> is <code>oc rsh</code>; <code>odel</code> is <code>oc delete</code> (catches name-vs-action drift); <code>odc</code> / <code>obc</code> are <code>oc get ... -o wide</code>; <code>ocexp</code> passes <code>--export</code>; graceful degradation when <code>oc</code> is missing (shell stays alive); re-source idempotency (same alias count).</td></tr>
           <tr><td><code>t-contract.zsh</code></td><td class="num">3</td><td>Entrypoint stem matches plugin dir basename (accepting the <code>zsh-</code> prefix variant); entrypoint parses under <code>zsh -n</code>; every <code>_*</code> completion file (if any) starts with <code>#compdef</code>.</td></tr>
-          <tr><td><code>t-syntax.zsh</code></td><td class="num">2</td><td><code>zsh -n</code> over every <code>*.zsh</code> in the plugin directory.</td></tr>
-          <tr class="total-row"><td>Total</td><td class="num">15</td><td>3 zunit files &middot; alias-surface + install-contract + syntax</td></tr>
+          <tr><td><code>t-syntax.zsh</code></td><td class="num">1</td><td><code>zsh -n</code> over every <code>*.zsh</code> in the plugin directory.</td></tr>
+          <tr class="total-row"><td>Total</td><td class="num">13</td><td>3 zunit files &middot; alias-surface + install-contract + syntax</td></tr>
         </tbody>
       </table>
 
@@ -217,7 +217,7 @@
       <h2 class="tutorial-title"><span class="step-hash">@</span>FOOTPRINT</h2>
       <ul style="font-size:12px;color:var(--text-dim);line-height:1.7;">
         <li><strong>Disk</strong>: one 118-line <code>.plugin.zsh</code> file plus <code>tests/</code> (3 files, 230 lines). No completion directory, no autoload tree, no compiled artifacts.</li>
-        <li><strong>Startup cost</strong>: the <code>type -ap oc</code> guard, a one-time <code>source &lt;(oc completion zsh)</code> when <code>oc</code> is present and not yet completed, and 52 <code>alias</code> + 5 function definitions. Zero cost on hosts without <code>oc</code> (early <code>return 1</code>).</li>
+        <li><strong>Startup cost</strong>: the <code>type -ap oc</code> guard, a one-time <code>source &lt;(oc completion zsh)</code> when <code>oc</code> is present and not yet completed, and 53 <code>alias</code> + 5 function definitions. Zero cost on hosts without <code>oc</code> (early <code>return 1</code>).</li>
         <li><strong>Runtime cost</strong>: each alias is a direct <code>oc</code> invocation &mdash; one subprocess. The replica-stepping functions issue two <code>oc</code> calls (a <code>get</code> to read replicas, a <code>scale</code> to set them).</li>
         <li><strong>External tools</strong>: <code>oc</code> (required, the load gate); the pod-hygiene / image-tally aliases also shell out to <code>tr</code>, <code>sort</code>, <code>uniq</code>, <code>awk</code>, <code>grep</code> for output post-processing.</li>
         <li><strong>Config surface</strong>: three <code>OCP_*</code> env vars, all for the login macros. No <code>zstyle</code>, no <code>bindkey</code>, no ZLE widgets.</li>
@@ -226,7 +226,7 @@
     </main>
 
     <footer style="text-align:center;padding:2rem;font-size:10px;color:var(--text-muted);font-family:'Orbitron',sans-serif;letter-spacing:2px;">
-      ZSH-OPENSHIFT-ALIASES ENGINEERING REPORT &middot; 118 ZSH LINES &middot; 52 OC ALIASES &middot; 5 FUNCTIONS &middot; 15 ZUNIT TESTS &middot; 3 TEST FILES &middot; OC COMPLETION &middot; MENKETECHNOLOGIES
+      ZSH-OPENSHIFT-ALIASES ENGINEERING REPORT &middot; 118 ZSH LINES &middot; 53 OC ALIASES &middot; 5 FUNCTIONS &middot; 13 ZUNIT TESTS &middot; 3 TEST FILES &middot; OC COMPLETION &middot; MENKETECHNOLOGIES
     </footer>
   </div>
 

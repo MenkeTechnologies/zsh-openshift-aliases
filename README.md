@@ -41,7 +41,7 @@ Set `OCP_USERNAME`, `OCP_DEV_URL`, `OCP_QA_URL` in your env, then `ocdev` / `ocq
 ## `> WHAT YOU GET`
 
 ```
-[x] 50 oc aliases (og=get, odep=apply -f, odesc=describe, olog=logs -f, ...)
+[x] 53 oc aliases (og=get, odep=apply -f, odesc=describe, olog=logs -f, ...)
 [x] ologin       — oc rsh into running pod
 [x] ocdev/ocqa   — env-driven login macros
 [x] oc completion auto-sourced when `oc` is on PATH
